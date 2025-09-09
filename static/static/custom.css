@@ -18,12 +18,12 @@ nav[aria-label="Sidebar"] img {
 /* ===== Content: พื้นหลังขาวทั้งหน้า ===== */
 html, body {
   height: 100%;
-  background: #000000 !important;
-  color: #000000 !important;
+  background: #ffffff !important;
+  color: #ffffff !important;
 }
 body > div[style*="display: contents"],
 main, .page, .content, .container, .w-full, .h-full, .min-h-screen, .h-screen {
-  background: #ffffff !important;
+  background: #000000 !important;
 }
 
 /* ===== Sidebar: ไล่สีส้ม→แดง เต็มความสูง ===== */
@@ -37,7 +37,7 @@ nav[aria-label="Sidebar"],
 body > div[style*="display: contents"] > div > div > :first-child
 {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
-  color: #000000 !important;
+  color: #ffffff !important;
 } 
 
 /* ===== ล้างกล่องทึบ “หัวแถบบนซ้าย” ให้โปร่งใส ===== */
@@ -97,7 +97,7 @@ main .bg-slate-900, main .bg-slate-950 {
    FORCE: ตัวหนังสือคอนเทนต์ให้ดำหมด
    ========================= */
 body * {
-  color: #000000 !important;    /* ทำให้ทุก element เป็นสีดำ */
+  color: #ffffff !important;    /* ทำให้ทุก element เป็นสีดำ */
 }
 
 /* แล้วตั้ง Sidebar ให้กลับเป็นขาวเพื่อความคมชัดบนไล่สี */
