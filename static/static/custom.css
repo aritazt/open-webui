@@ -1,107 +1,38 @@
-/* แทนโลโก้ด้านซ้ายบน */
-/* โลโก้ด้านซ้ายบน */
-#logo,
-.sidebar img,
-nav[aria-label="Sidebar"] img {
-  content: url("/static/kmutt.png") !important;
-  background: transparent !important;  /* เอาพื้นหลังออก */
-  border: none !important;             /* เอากรอบดำออก */
-  border-radius: 0 !important;
-  width: 3rem !important;              /* ขยายขนาด (จาก 2 → 3rem) */
-  height: 3rem !important;
-  object-fit: cover !important;        /* ครอปพอดีกรอบ */
-  object-position: center !important;  /* จัดกึ่งกลาง */
-  transform: scale(5);               /* ซูมเข้าเพิ่ม 150% */
-}
-
-
-/* ===== Content: พื้นหลังขาวทั้งหน้า ===== */
-html, body {
-  height: 100%;
-  background: #ffffff !important;
-  color: #ffffff !important;
-}
-body > div[style*="display: contents"],
-main, .page, .content, .container, .w-full, .h-full, .min-h-screen, .h-screen {
-  background: #000000 !important;
-}
-
-/* ===== Sidebar: ไล่สีส้ม→แดง เต็มความสูง ===== */
-/* ใช้ selector กว้าง เพื่อครอบเคสชื่อคลาสที่ต่างกัน */
-aside,
-nav[aria-label="Sidebar"],
-.sidebar,
-[class*="sidebar"],
-/* ด้านซ้ายมักเป็นคอลัมน์แรกของ layout แบบ flex */
-.app-layout > :first-child,
-body > div[style*="display: contents"] > div > div > :first-child
-{
+body aside,
+body nav[aria-label="Sidebar"],
+body .sidebar,
+body [class*="sidebar"],
+body .app-layout > :first-child,
+body div[style*="display: contents"] > div > div > :first-child {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #ffffff !important;
-} 
-
-/* ===== ล้างกล่องทึบ “หัวแถบบนซ้าย” ให้โปร่งใส ===== */
-aside .sticky.top-0,
-nav[aria-label="Sidebar"] .sticky.top-0,
-.sidebar .sticky.top-0,
-[class*="sidebar"] .sticky.top-0,
-aside .h-12, aside .h-14,
-nav[aria-label="Sidebar"] .h-12, nav[aria-label="Sidebar"] .h-14 {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
+}
+.relative.flex.flex-col.flex-1.s-CQzCIXq4wXlR {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important;
+}
+/* เปลี่ยนพื้นหลังให้กับแต่ละปุ่มใน sidebar */
+#sidebar-new-chat-button,
+button[aria-label="Search"],
+a[aria-label="Notes"],
+a[aria-label="Workspace"] {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important; /* ทำให้ข้อความเป็นสีขาว */
+  transition: background 0.3s ease; /* เพิ่มการเปลี่ยนแปลงค่อยๆ */
 }
 
-/* ===== ล้างกล่องทึบ “โปรไฟล์ล่างซ้าย” ให้โปร่งใส ===== */
-aside .sticky.bottom-0,
-nav[aria-label="Sidebar"] .sticky.bottom-0,
-.sidebar .sticky.bottom-0,
-[class*="sidebar"] .sticky.bottom-0,
-aside [class*="bottom-0"],
-nav[aria-label="Sidebar"] [class*="bottom-0"] {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-  border-color: transparent !important;
-}
-
-/* สีตัวอักษร/ไอคอนใน Sidebar ให้เป็นขาวเพื่อความคมชัด */
-aside, nav[aria-label="Sidebar"], .sidebar, [class*="sidebar"],
-aside *, nav[aria-label="Sidebar"] *, .sidebar * {
+/* เปลี่ยนพื้นหลังของ Side bar */
+#sidebar {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #ffffff !important;
 }
 
-/* ===== หัวแถบด้านบนของ content (model picker bar) ให้โปร่งใส ===== */
-main .sticky.top-0,
-main header.sticky,
-main [class*="top-0"][class*="sticky"] {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
-}
-
-/* ===== กันพื้นหลังมืดที่ชอบมาทับ ===== */
-.bg-black, .bg-neutral-900, .bg-neutral-950,
-.bg-gray-900, .bg-gray-950,
-.bg-zinc-900, .bg-zinc-950,
-.bg-slate-900, .bg-slate-950 {
-  background: transparent !important;          /* ใน sidebar ให้โปร่งใส */
-}
-main .bg-black, main .bg-neutral-900, main .bg-neutral-950,
-main .bg-gray-900, main .bg-gray-950,
-main .bg-zinc-900, main .bg-zinc-950,
-main .bg-slate-900, main .bg-slate-950 {
-  background: #ffffff !important;              /* ใน content ให้เป็นขาว */
-}
-/* =========================
-   FORCE: ตัวหนังสือคอนเทนต์ให้ดำหมด
-   ========================= */
-body * {
-  color: #ffffff !important;    /* ทำให้ทุก element เป็นสีดำ */
-}
-
-/* แล้วตั้ง Sidebar ให้กลับเป็นขาวเพื่อความคมชัดบนไล่สี */
-aside, nav[aria-label="Sidebar"], .sidebar, [class*="sidebar"],
-aside *, nav[aria-label="Sidebar"] *, .sidebar * {
+/* เปลี่ยนพื้นหลังและเพิ่มกรอบเมื่อ hover บนปุ่มหรือลิงก์ */
+#sidebar a:hover,
+#sidebar button:hover {
+  background: linear-gradient(180deg, #FF9C2B 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #ffffff !important;
+  border: 2px solid #FF3D00 !important; /* เพิ่มกรอบสีส้ม */
+  border-radius: 8px; /* ให้กรอบมีมุมโค้ง */
 }
+
