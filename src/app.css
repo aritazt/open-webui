@@ -637,3 +637,14 @@ body {
 	background: #171717;
 	color: #eee;
 }
+
+#sidebar,
+.dark #sidebar {
+    background: linear-gradient(#F04F22 0%, #FF9C2B 100%);
+}
+.sidebar,
+.sidebar *,
+.dark .sidebar,
+.dark .sidebar * {
+    background: transparent;
+}
