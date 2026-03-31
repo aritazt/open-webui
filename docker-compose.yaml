@@ -24,7 +24,19 @@ services:
       - ${OPEN_WEBUI_PORT-3000}:8080
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
-      - 'WEBUI_SECRET_KEY='
+      - 'WEBUI_SECRET_KEY=super_random_very_long_string_123456'
+      - OAUTH_SESSION_TOKEN_ENCRYPTION_KEY=another_super_long_random_string
+      - ENABLE_OAUTH_SIGNUP=true
+       # 👇 Microsoft OAuth
+      - MICROSOFT_CLIENT_ID=YOUR_CLIENT_ID
+      - MICROSOFT_CLIENT_SECRET=YOUR_CLIENT_SECRET
+      - MICROSOFT_CLIENT_TENANT_ID=common
+      - OPENID_PROVIDER_URL=https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration
+
+      # 👇 สำคัญมาก
+      - WEBUI_URL=http://localhost:5173/
+      - ENABLE_OAUTH_PERSISTENT_CONFIG=false
+
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped
