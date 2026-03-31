@@ -534,9 +534,12 @@
 						aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
 					>
 						<div class=" self-center flex items-center justify-center size-9">
+							<script lang="ts">
+								import { base } from '$app/paths';
+							</script>
 							<img
 								crossorigin="anonymous"
-								src="{WEBUI_BASE_URL}/static/favicon.png"
+								src="{WEBUI_BASE_URL}/favicon.png"
 								class="sidebar-new-chat-icon size-6 rounded-full group-hover:hidden"
 								alt=""
 							/>
@@ -712,9 +715,12 @@
 					draggable="false"
 					on:click={newChatHandler}
 				>
+					<script lang="ts">
+						import { base } from '$app/paths';
+					</script>
 					<img
 						crossorigin="anonymous"
-						src="{WEBUI_BASE_URL}/static/favicon.png"
+						src="{WEBUI_BASE_URL}/favicon.png"
 						class="sidebar-new-chat-icon size-6 rounded-full"
 						alt=""
 					/>

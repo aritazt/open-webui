@@ -1,0 +1,38 @@
+body aside,
+body nav[aria-label="Sidebar"],
+body .sidebar,
+body [class*="sidebar"],
+body .app-layout > :first-child,
+body div[style*="display: contents"] > div > div > :first-child {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important;
+}
+.relative.flex.flex-col.flex-1.s-CQzCIXq4wXlR {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important;
+}
+/* เปลี่ยนพื้นหลังให้กับแต่ละปุ่มใน sidebar */
+#sidebar-new-chat-button,
+button[aria-label="Search"],
+a[aria-label="Notes"],
+a[aria-label="Workspace"] {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important; /* ทำให้ข้อความเป็นสีขาว */
+  transition: background 0.3s ease; /* เพิ่มการเปลี่ยนแปลงค่อยๆ */
+}
+
+/* เปลี่ยนพื้นหลังของ Side bar */
+#sidebar {
+  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important;
+}
+
+/* เปลี่ยนพื้นหลังและเพิ่มกรอบเมื่อ hover บนปุ่มหรือลิงก์ */
+#sidebar a:hover,
+#sidebar button:hover {
+  background: linear-gradient(180deg, #FF9C2B 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #FF3D00 !important; /* เพิ่มกรอบสีส้ม */
+  border-radius: 8px; /* ให้กรอบมีมุมโค้ง */
+}
+
