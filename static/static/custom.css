@@ -1,16 +1,13 @@
-body aside,
-body nav[aria-label="Sidebar"],
-body .sidebar,
-body [class*="sidebar"],
-body .app-layout > :first-child,
-body div[style*="display: contents"] > div > div > :first-child {
+#sidebar {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #ffffff !important;
 }
-.relative.flex.flex-col.flex-1.s-CQzCIXq4wXlR {
+
+#sidebar:hover {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
-  color: #ffffff !important;
 }
+
+/* เปลี่ยนพื้นหลังให้กับแต่ละปุ่มใน sidebar */
 /* เปลี่ยนพื้นหลังให้กับแต่ละปุ่มใน sidebar */
 #sidebar-new-chat-button,
 button[aria-label="Search"],
