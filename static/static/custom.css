@@ -1,5 +1,9 @@
 #sidebar {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #000000 !important;
+}
+
+.dark #sidebar {
   color: #ffffff !important;
 }
 
@@ -8,19 +12,19 @@
 }
 
 /* เปลี่ยนพื้นหลังให้กับแต่ละปุ่มใน sidebar */
-/* เปลี่ยนพื้นหลังให้กับแต่ละปุ่มใน sidebar */
 #sidebar-new-chat-button,
 button[aria-label="Search"],
 a[aria-label="Notes"],
 a[aria-label="Workspace"] {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
-  color: #ffffff !important; /* ทำให้ข้อความเป็นสีขาว */
-  transition: background 0.3s ease; /* เพิ่มการเปลี่ยนแปลงค่อยๆ */
+  color: #000000 !important;
+  transition: background 0.3s ease;
 }
 
-/* เปลี่ยนพื้นหลังของ Side bar */
-#sidebar {
-  background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+.dark #sidebar-new-chat-button,
+.dark button[aria-label="Search"],
+.dark a[aria-label="Notes"],
+.dark a[aria-label="Workspace"] {
   color: #ffffff !important;
 }
 
@@ -28,8 +32,13 @@ a[aria-label="Workspace"] {
 #sidebar a:hover,
 #sidebar button:hover {
   background: linear-gradient(180deg, #FF9C2B 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
+  color: #000000 !important;
+  border: 2px solid #FF3D00 !important;
+  border-radius: 8px;
+}
+
+.dark #sidebar a:hover,
+.dark #sidebar button:hover {
   color: #ffffff !important;
-  border: 2px solid #FF3D00 !important; /* เพิ่มกรอบสีส้ม */
-  border-radius: 8px; /* ให้กรอบมีมุมโค้ง */
 }
 
