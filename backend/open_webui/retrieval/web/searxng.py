@@ -3,10 +3,8 @@ from typing import Optional
 
 import requests
 from open_webui.retrieval.web.main import SearchResult, get_filtered_results
-from open_webui.env import SRC_LOG_LEVELS
 
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["RAG"])
 
 
 def search_searxng(
@@ -27,7 +25,7 @@ def search_searxng(
         count (int): The maximum number of results to retrieve from the search.
 
     Keyword Args:
-        language (str): Language filter for the search results; e.g., "en-US". Defaults to an empty string.
+        language (str): Language filter for the search results; e.g., "all", "en-US", "es". Defaults to "all".
         safesearch (int): Safe search filter for safer web results; 0 = off, 1 = moderate, 2 = strict. Defaults to 1 (moderate).
         time_range (str): Time range for filtering results by date; e.g., "2023-04-05..today" or "all-time". Defaults to ''.
         categories: (Optional[list[str]]): Specific categories within which the search should be performed, defaulting to an empty string if not provided.
@@ -40,38 +38,38 @@ def search_searxng(
     """
 
     # Default values for optional parameters are provided as empty strings or None when not specified.
-    language = kwargs.get("language", "en-US")
-    safesearch = kwargs.get("safesearch", "1")
-    time_range = kwargs.get("time_range", "")
-    categories = "".join(kwargs.get("categories", []))
+    language = kwargs.get('language', 'all')
+    safesearch = kwargs.get('safesearch', '1')
+    time_range = kwargs.get('time_range', '')
+    categories = ''.join(kwargs.get('categories', []))
 
     params = {
-        "q": query,
-        "format": "json",
-        "pageno": 1,
-        "safesearch": safesearch,
-        "language": language,
-        "time_range": time_range,
-        "categories": categories,
-        "theme": "simple",
-        "image_proxy": 0,
+        'q': query,
+        'format': 'json',
+        'pageno': 1,
+        'safesearch': safesearch,
+        'language': language,
+        'time_range': time_range,
+        'categories': categories,
+        'theme': 'simple',
+        'image_proxy': 0,
     }
 
     # Legacy query format
-    if "<query>" in query_url:
+    if '<query>' in query_url:
         # Strip all query parameters from the URL
-        query_url = query_url.split("?")[0]
+        query_url = query_url.split('?')[0]
 
-    log.debug(f"searching {query_url}")
+    log.debug(f'searching {query_url}')
 
     response = requests.get(
         query_url,
         headers={
-            "User-Agent": "Open WebUI (https://github.com/open-webui/open-webui) RAG Bot",
-            "Accept": "text/html",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Connection": "keep-alive",
+            'User-Agent': 'Open WebUI (https://github.com/open-webui/open-webui) RAG Bot',
+            'Accept': 'text/html',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Connection': 'keep-alive',
         },
         params=params,
     )
@@ -79,13 +77,11 @@ def search_searxng(
     response.raise_for_status()  # Raise an exception for HTTP errors.
 
     json_response = response.json()
-    results = json_response.get("results", [])
-    sorted_results = sorted(results, key=lambda x: x.get("score", 0), reverse=True)
+    results = json_response.get('results', [])
+    sorted_results = sorted(results, key=lambda x: x.get('score', 0), reverse=True)
     if filter_list:
         sorted_results = get_filtered_results(sorted_results, filter_list)
     return [
-        SearchResult(
-            link=result["url"], title=result.get("title"), snippet=result.get("content")
-        )
+        SearchResult(link=result['url'], title=result.get('title'), snippet=result.get('content'))
         for result in sorted_results[:count]
     ]

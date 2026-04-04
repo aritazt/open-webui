@@ -27,7 +27,8 @@
 		showSidebar,
 		currentChatPage,
 		tags,
-		selectedFolder
+		selectedFolder,
+		activeChatIds
 	} from '$lib/stores';
 
 	import ChatMenu from './ChatMenu.svelte';
@@ -41,23 +42,42 @@
 	import XMark from '$lib/components/icons/XMark.svelte';
 	import Document from '$lib/components/icons/Document.svelte';
 	import Sparkles from '$lib/components/icons/Sparkles.svelte';
+	import Spinner from '$lib/components/common/Spinner.svelte';
 	import { generateTitle } from '$lib/apis';
 
 	export let className = '';
 
 	export let id;
 	export let title;
+	export let createdAt: number | null = null;
 
 	export let selected = false;
 	export let shiftKey = false;
 
+	export let onDragEnd = () => {};
+
+	function formatTimeAgo(timestamp: number): string {
+		const now = Date.now();
+		const diff = now - timestamp * 1000; // timestamp is in seconds
+
+		const seconds = Math.floor(diff / 1000);
+		const minutes = Math.floor(seconds / 60);
+		const hours = Math.floor(minutes / 60);
+		const days = Math.floor(hours / 24);
+		const weeks = Math.floor(days / 7);
+		const years = Math.floor(days / 365);
+
+		if (years > 0) return $i18n.t('{{COUNT}}y', { COUNT: years, context: 'time_ago' });
+		if (weeks > 0) return $i18n.t('{{COUNT}}w', { COUNT: weeks, context: 'time_ago' });
+		if (days > 0) return $i18n.t('{{COUNT}}d', { COUNT: days, context: 'time_ago' });
+		if (hours > 0) return $i18n.t('{{COUNT}}h', { COUNT: hours, context: 'time_ago' });
+		if (minutes > 0) return $i18n.t('{{COUNT}}m', { COUNT: minutes, context: 'time_ago' });
+		return $i18n.t('1m', { context: 'time_ago' });
+	}
+
 	let chat = null;
 
 	let mouseOver = false;
-	let draggable = false;
-	$: if (mouseOver) {
-		loadChat();
-	}
 
 	const loadChat = async () => {
 		if (!chat) {
@@ -133,8 +153,20 @@
 	};
 
 	const archiveChatHandler = async (id) => {
-		await archiveChatById(localStorage.token, id);
-		dispatch('change');
+		try {
+			await archiveChatById(localStorage.token, id);
+
+			if ($chatId === id) {
+				await goto('/');
+				chatId.set('');
+			}
+
+			dispatch('change');
+			toast.success($i18n.t('Chat archived.'));
+		} catch (error) {
+			console.error('Error archiving chat:', error);
+			toast.error($i18n.t('Failed to archive chat.'));
+		}
 	};
 
 	const moveChatHandler = async (chatId, folderId) => {
@@ -185,8 +217,7 @@
 			'text/plain',
 			JSON.stringify({
 				type: 'chat',
-				id: id,
-				item: chat
+				id: id
 			})
 		);
 
@@ -201,18 +232,25 @@
 		y = event.clientY;
 	};
 
-	const onDragEnd = (event) => {
+	const onDragEndHandler = (event) => {
 		event.stopPropagation();
 
 		itemElement.style.opacity = '1'; // Reset visual cue after drag
 		dragged = false;
+
+		onDragEnd(event);
 	};
 
 	const onClickOutside = (event) => {
-		if (confirmEdit && !event.target.closest(`#chat-title-input-${id}`)) {
-			confirmEdit = false;
-			ignoreBlur = false;
-			chatTitle = '';
+		if (!itemElement.contains(event.target)) {
+			if (confirmEdit) {
+				if (chatTitle !== title) {
+					editChatTitle(id, chatTitle);
+				}
+
+				confirmEdit = false;
+				chatTitle = '';
+			}
 		}
 	};
 
@@ -225,7 +263,7 @@
 			// Event listener for when dragging occurs (optional)
 			itemElement.addEventListener('drag', onDrag);
 			// Event listener for when dragging ends
-			itemElement.addEventListener('dragend', onDragEnd);
+			itemElement.addEventListener('dragend', onDragEndHandler);
 		}
 	});
 
@@ -235,7 +273,7 @@
 
 			itemElement.removeEventListener('dragstart', onDragStart);
 			itemElement.removeEventListener('drag', onDrag);
-			itemElement.removeEventListener('dragend', onDragEnd);
+			itemElement.removeEventListener('dragend', onDragEndHandler);
 		}
 	});
 
@@ -263,7 +301,10 @@
 
 		setTimeout(() => {
 			const input = document.getElementById(`chat-title-input-${id}`);
-			if (input) input.focus();
+			if (input) {
+				input.focus();
+				input.select();
+			}
 		}, 0);
 	};
 
@@ -333,17 +374,19 @@
 {/if}
 
 <div
+	id="sidebar-chat-group"
 	bind:this={itemElement}
 	class=" w-full {className} relative group"
-	draggable={draggable && !confirmEdit}
+	draggable={!confirmEdit}
 >
 	{#if confirmEdit}
 		<div
-			class=" w-full flex justify-between rounded-lg px-[11px] py-[6px] {id === $chatId ||
+			id="sidebar-chat-item"
+			class=" w-full flex justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
 			confirmEdit
-				? 'bg-gray-100 dark:bg-gray-900'
+				? 'bg-gray-100 dark:bg-gray-900 selected'
 				: selected
-					? 'bg-gray-100 dark:bg-gray-950'
+					? 'bg-gray-100 dark:bg-gray-950 selected'
 					: 'group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  whitespace-nowrap text-ellipsis relative {generating
 				? 'cursor-not-allowed'
 				: ''}"
@@ -356,16 +399,6 @@
 				disabled={generating}
 				on:keydown={chatTitleInputKeydownHandler}
 				on:blur={async (e) => {
-					// check if target is generate button
-					if (ignoreBlur) {
-						ignoreBlur = false;
-
-						if (e.relatedTarget?.id === 'generate-title-button') {
-							generateTitleHandler();
-						}
-						return;
-					}
-
 					if (doubleClicked) {
 						e.preventDefault();
 						e.stopPropagation();
@@ -379,33 +412,24 @@
 						doubleClicked = false;
 						return;
 					}
-
-					if (chatTitle !== title) {
-						editChatTitle(id, chatTitle);
-					}
-
-					confirmEdit = false;
-					chatTitle = '';
 				}}
 			/>
 		</div>
 	{:else}
 		<a
-			class=" w-full flex justify-between rounded-lg px-[11px] py-[6px] {id === $chatId ||
+			id="sidebar-chat-item"
+			class=" w-full flex justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
 			confirmEdit
-				? 'bg-gray-100 dark:bg-gray-900'
+				? 'bg-gray-100 dark:bg-gray-900 selected'
 				: selected
-					? 'bg-gray-100 dark:bg-gray-950'
+					? 'bg-gray-100 dark:bg-gray-950 selected'
 					: ' group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  whitespace-nowrap text-ellipsis"
 			href="/c/{id}"
 			on:click={() => {
 				dispatch('select');
 
-				if (
-					$selectedFolder &&
-					!($selectedFolder?.items?.chats.map((chat) => chat.id) ?? []).includes(id)
-				) {
-					selectedFolder.set(null); // Reset selected folder if the chat is not in it
+				if ($selectedFolder) {
+					selectedFolder.set(null);
 				}
 
 				if ($mobile) {
@@ -428,21 +452,36 @@
 			on:focus={(e) => {}}
 			draggable="false"
 		>
-			<div class=" flex self-center flex-1 w-full">
-				<div dir="auto" class="text-left self-center overflow-hidden w-full h-[20px]">
+			<!-- Loading spinner for active chat (left side) -->
+			{#if $activeChatIds.has(id)}
+				<div class="shrink-0 self-center pr-2">
+					<Spinner className="size-3" />
+				</div>
+			{/if}
+
+			<div class="flex self-center flex-1 w-full min-w-0">
+				<div dir="auto" class="text-left self-center overflow-hidden w-full h-[20px] truncate">
 					{title}
 				</div>
 			</div>
+
+			<!-- Time ago indicator -->
+			{#if createdAt && !mouseOver}
+				<div class="shrink-0 self-center text-[10px] text-gray-400 dark:text-gray-500 pl-2">
+					{formatTimeAgo(createdAt)}
+				</div>
+			{/if}
 		</a>
 	{/if}
 
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div
+		id="sidebar-chat-item-menu"
 		class="
         {id === $chatId || confirmEdit
-			? 'from-gray-100 dark:from-gray-900'
+			? 'from-gray-100 dark:from-gray-900 selected'
 			: selected
-				? 'from-gray-100 dark:from-gray-950'
+				? 'from-gray-100 dark:from-gray-950 selected'
 				: 'invisible group-hover:visible from-gray-100 dark:from-gray-950'}
             absolute {className === 'pr-2'
 			? 'right-[8px]'
@@ -465,8 +504,8 @@
 						class=" self-center dark:hover:text-white transition disabled:cursor-not-allowed"
 						id="generate-title-button"
 						disabled={generating}
-						on:mouseenter={() => {
-							ignoreBlur = true;
+						on:click={() => {
+							generateTitleHandler();
 						}}
 					>
 						<Sparkles strokeWidth="2" />
@@ -520,11 +559,8 @@
 					onClose={() => {
 						dispatch('unselect');
 					}}
-					on:change={async () => {
+					onPinChange={async () => {
 						dispatch('change');
-					}}
-					on:tag={(e) => {
-						dispatch('tag', e.detail);
 					}}
 				>
 					<button

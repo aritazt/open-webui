@@ -43,6 +43,10 @@
 	let searchDebounceTimeout;
 
 	const searchHandler = async () => {
+		if (!show) {
+			return;
+		}
+
 		if (searchDebounceTimeout) {
 			clearTimeout(searchDebounceTimeout);
 		}
@@ -77,7 +81,9 @@
 		allChatsLoaded = newChatList.length === 0;
 
 		if (newChatList.length > 0) {
-			chatList = [...chatList, ...newChatList];
+			const existingIds = new Set(chatList.map((c) => c.id));
+			const uniqueNewChats = newChatList.filter((c) => !existingIds.has(c.id));
+			chatList = [...chatList, ...uniqueNewChats];
 		}
 
 		chatListLoading = false;
@@ -103,7 +109,9 @@
 	bind:query
 	bind:orderBy
 	bind:direction
-	title={$i18n.t("{{user}}'s Chats", { user: user.name })}
+	title={$i18n.t("{{user}}'s Chats", {
+		user: user.name.length > 32 ? `${user.name.slice(0, 32)}...` : user.name
+	})}
 	emptyPlaceholder={$i18n.t('No chats found for this user.')}
 	shareUrl={true}
 	{chatList}

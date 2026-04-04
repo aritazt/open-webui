@@ -16,12 +16,20 @@
 		"title": "Arabic (Bahrain)"
 	},
 	{
+		"code": "az-AZ",
+		"title": "Azərbaycanca"
+	},
+	{
 		"code": "eu-ES",
 		"title": "Basque (Euskara)"
 	},
 	{
 		"code": "bn-BD",
 		"title": "Bengali (বাংলা)"
+	},
+	{
+		"code": "bs-BA",
+		"title": "Bosanski Latinica"
 	},
 	{
 		"code": "bo-TB",
@@ -126,6 +134,10 @@
 	{
 		"code": "lt-LT",
 		"title": "Lithuanian (Lietuvių)"
+	},
+	{
+		"code": "lv-LV",
+		"title": "Latvian (Latviešu)"
 	},
 	{
 		"code": "ms-MY",

@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { DropdownMenu } from 'bits-ui';
 	import { createEventDispatcher, getContext, onMount, tick } from 'svelte';
 
-	import { flyAndScale } from '$lib/utils/transitions';
 	import { goto } from '$app/navigation';
 	import { fade, slide } from 'svelte/transition';
 
 	import { getUsage } from '$lib/apis';
-	import { userSignOut } from '$lib/apis/auths';
+	import { getSessionUser, userSignOut } from '$lib/apis/auths';
 
-	import { showSettings, mobile, showSidebar, showShortcuts, user } from '$lib/stores';
+	import { showSettings, mobile, showSidebar, showShortcuts, user, config } from '$lib/stores';
 
+	import { WEBUI_API_BASE_URL } from '$lib/constants';
+
+	import Dropdown from '$lib/components/common/Dropdown.svelte';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import ArchiveBox from '$lib/components/icons/ArchiveBox.svelte';
 	import QuestionMarkCircle from '$lib/components/icons/QuestionMarkCircle.svelte';
@@ -21,13 +22,27 @@
 	import Code from '$lib/components/icons/Code.svelte';
 	import UserGroup from '$lib/components/icons/UserGroup.svelte';
 	import SignOut from '$lib/components/icons/SignOut.svelte';
+	import FaceSmile from '$lib/components/icons/FaceSmile.svelte';
+	import UserStatusModal from './UserStatusModal.svelte';
+	import Emoji from '$lib/components/common/Emoji.svelte';
+	import XMark from '$lib/components/icons/XMark.svelte';
+	import { updateUserStatus } from '$lib/apis/users';
+	import { toast } from 'svelte-sonner';
 
 	const i18n = getContext('i18n');
 
 	export let show = false;
 	export let role = '';
+
+	export let profile = false;
 	export let help = false;
-	export let className = 'max-w-[240px]';
+
+	export let className = 'w-[240px]';
+	export let align = 'end';
+
+	export let showActiveUsers = true;
+
+	let showUserStatusModal = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -44,34 +59,144 @@
 		}
 	};
 
-	$: if (show) {
-		getUsageInfo();
-	}
+	const handleDropdownChange = (state) => {
+		dispatch('change', state);
+
+		// Fetch usage info when dropdown opens, if user has permission
+		if (state && ($config?.features?.enable_public_active_users_count || role === 'admin')) {
+			getUsageInfo();
+		}
+	};
 </script>
 
 <ShortcutsModal bind:show={$showShortcuts} />
+<UserStatusModal
+	bind:show={showUserStatusModal}
+	onSave={async () => {
+		user.set(await getSessionUser(localStorage.token));
+	}}
+/>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<DropdownMenu.Root
-	bind:open={show}
-	onOpenChange={(state) => {
-		dispatch('change', state);
-	}}
->
-	<DropdownMenu.Trigger>
-		<slot />
-	</DropdownMenu.Trigger>
+<Dropdown bind:show onOpenChange={handleDropdownChange} {align}>
+	<slot />
 
-	<slot name="content">
-		<DropdownMenu.Content
-			class="w-full {className} text-sm rounded-xl px-1 py-1.5 z-50 bg-white dark:bg-gray-850 dark:text-white shadow-lg font-primary"
-			sideOffset={4}
-			side="bottom"
-			align="start"
-			transition={(e) => fade(e, { duration: 100 })}
+	<div slot="content">
+		<div
+			class="{className} rounded-2xl px-1 py-1 border border-gray-100 dark:border-gray-800 z-50 bg-white dark:bg-gray-850 dark:text-white shadow-lg text-sm"
 		>
-			<DropdownMenu.Item
-				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
+			{#if profile}
+				<div class=" flex gap-3.5 w-full p-2.5 items-center">
+					<div class=" items-center flex shrink-0">
+						<img
+							src={`${WEBUI_API_BASE_URL}/users/${$user?.id}/profile/image`}
+							class=" size-10 object-cover rounded-full"
+							alt="profile"
+						/>
+					</div>
+
+					<div class=" flex flex-col w-full flex-1">
+						<div class="font-medium line-clamp-1 pr-2">
+							{$user.name}
+						</div>
+
+						<div class=" flex items-center gap-2">
+							{#if $user?.is_active ?? true}
+								<div>
+									<span class="relative flex size-2">
+										<span class="relative inline-flex rounded-full size-2 bg-green-500" />
+									</span>
+								</div>
+
+								<span class="text-xs"> {$i18n.t('Active')} </span>
+							{:else}
+								<div>
+									<span class="relative flex size-2">
+										<span class="relative inline-flex rounded-full size-2 bg-gray-500" />
+									</span>
+								</div>
+
+								<span class="text-xs"> {$i18n.t('Away')} </span>
+							{/if}
+						</div>
+					</div>
+				</div>
+
+				{#if $user?.status_emoji || $user?.status_message}
+					<div class="mx-1">
+						<button
+							class="mb-1 w-full gap-2 px-2.5 py-1.5 rounded-xl bg-gray-50 dark:text-white dark:bg-gray-900/50 text-black transition text-xs flex items-center"
+							type="button"
+							on:click={() => {
+								show = false;
+								showUserStatusModal = true;
+							}}
+						>
+							{#if $user?.status_emoji}
+								<div class=" self-center shrink-0">
+									<Emoji className="size-4" shortCode={$user?.status_emoji} />
+								</div>
+							{/if}
+
+							<Tooltip
+								content={$user?.status_message}
+								className=" self-center line-clamp-2 flex-1 text-left"
+							>
+								{$user?.status_message}
+							</Tooltip>
+
+							<div class="self-start">
+								<Tooltip content={$i18n.t('Clear status')}>
+									<button
+										type="button"
+										on:click={async (e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											e.stopImmediatePropagation();
+
+											const res = await updateUserStatus(localStorage.token, {
+												status_emoji: '',
+												status_message: ''
+											});
+
+											if (res) {
+												toast.success($i18n.t('Status cleared successfully'));
+												user.set(await getSessionUser(localStorage.token));
+											} else {
+												toast.error($i18n.t('Failed to clear status'));
+											}
+										}}
+									>
+										<XMark className="size-4 opacity-50" strokeWidth="2" />
+									</button>
+								</Tooltip>
+							</div>
+						</button>
+					</div>
+				{:else}
+					<div class="mx-1">
+						<button
+							class="mb-1 w-full px-3 py-1.5 gap-1 rounded-xl bg-gray-50 dark:text-white dark:bg-gray-900/50 text-black transition text-xs flex items-center justify-center"
+							type="button"
+							on:click={() => {
+								show = false;
+								showUserStatusModal = true;
+							}}
+						>
+							<div class=" self-center">
+								<FaceSmile className="size-4" strokeWidth="1.5" />
+							</div>
+							<div class=" self-center truncate">{$i18n.t('Update your status')}</div>
+						</button>
+					</div>
+				{/if}
+
+				<hr class=" border-gray-50/30 dark:border-gray-800/30 my-1.5 p-0" />
+			{/if}
+
+			<button
+				class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
+				type="button"
 				on:click={async () => {
 					show = false;
 
@@ -87,10 +212,11 @@
 					<Settings className="w-5 h-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Settings')}</div>
-			</DropdownMenu.Item>
+			</button>
 
-			<DropdownMenu.Item
-				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
+			<button
+				class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
+				type="button"
 				on:click={async () => {
 					show = false;
 
@@ -107,15 +233,20 @@
 					<ArchiveBox className="size-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Archived Chats')}</div>
-			</DropdownMenu.Item>
+			</button>
 
 			{#if role === 'admin'}
-				<DropdownMenu.Item
-					as="a"
+				<a
 					href="/playground"
-					class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition select-none"
-					on:click={async () => {
+					draggable="false"
+					class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
+					on:click={async (e) => {
+						if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
+							return;
+						}
+						e.preventDefault();
 						show = false;
+						goto('/playground');
 						if ($mobile) {
 							await tick();
 							showSidebar.set(false);
@@ -126,13 +257,18 @@
 						<Code className="size-5" strokeWidth="1.5" />
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Playground')}</div>
-				</DropdownMenu.Item>
-				<DropdownMenu.Item
-					as="a"
+				</a>
+				<a
 					href="/admin"
-					class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition select-none"
-					on:click={async () => {
+					draggable="false"
+					class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
+					on:click={async (e) => {
+						if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
+							return;
+						}
+						e.preventDefault();
 						show = false;
+						goto('/admin');
 						if ($mobile) {
 							await tick();
 							showSidebar.set(false);
@@ -143,45 +279,52 @@
 						<UserGroup className="w-5 h-5" strokeWidth="1.5" />
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
-				</DropdownMenu.Item>
+				</a>
 			{/if}
 
 			{#if help}
-				<hr class=" border-gray-50 dark:border-gray-800 my-1 p-0" />
+				<hr class=" border-gray-50/30 dark:border-gray-800/30 my-1 p-0" />
 
 				<!-- {$i18n.t('Help')} -->
 
 				{#if $user?.role === 'admin'}
-					<DropdownMenu.Item
-						as="a"
-						class="flex gap-2 items-center py-1.5 px-3 text-sm select-none w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition"
+					<a
+						href="https://docs.openwebui.com"
+						target="_blank"
+						draggable="false"
+						class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
 						id="chat-share-button"
 						on:click={() => {
 							show = false;
 						}}
-						href="https://docs.openwebui.com"
 					>
-						<QuestionMarkCircle className="size-5" />
-						<div class="flex items-center">{$i18n.t('Documentation')}</div>
-					</DropdownMenu.Item>
+						<div class=" self-center mr-3">
+							<QuestionMarkCircle className="size-5" />
+						</div>
+						<div class=" self-center truncate">{$i18n.t('Documentation')}</div>
+					</a>
 
 					<!-- Releases -->
-					<DropdownMenu.Item
-						as="a"
-						class="flex gap-2 items-center py-1.5 px-3 text-sm select-none w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition"
+					<a
+						href="https://github.com/open-webui/open-webui/releases"
+						target="_blank"
+						draggable="false"
+						class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
 						id="chat-share-button"
 						on:click={() => {
 							show = false;
 						}}
-						href="https://github.com/open-webui/open-webui/releases"
 					>
-						<Map className="size-5" />
-						<div class="flex items-center">{$i18n.t('Releases')}</div>
-					</DropdownMenu.Item>
+						<div class=" self-center mr-3">
+							<Map className="size-5" />
+						</div>
+						<div class=" self-center truncate">{$i18n.t('Releases')}</div>
+					</a>
 				{/if}
 
-				<DropdownMenu.Item
-					class="flex gap-2 items-center py-1.5 px-3 text-sm select-none w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition cursor-pointer"
+				<button
+					class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
+					type="button"
 					id="chat-share-button"
 					on:click={async () => {
 						show = false;
@@ -193,15 +336,18 @@
 						}
 					}}
 				>
-					<Keyboard className="size-5" />
-					<div class="flex items-center">{$i18n.t('Keyboard shortcuts')}</div>
-				</DropdownMenu.Item>
+					<div class=" self-center mr-3">
+						<Keyboard className="size-5" />
+					</div>
+					<div class=" self-center truncate">{$i18n.t('Keyboard shortcuts')}</div>
+				</button>
 			{/if}
 
-			<hr class=" border-gray-50 dark:border-gray-800 my-1 p-0" />
+			<hr class=" border-gray-50/30 dark:border-gray-800/30 my-1 p-0" />
 
-			<DropdownMenu.Item
-				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+			<button
+				class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"
+				type="button"
 				on:click={async () => {
 					const res = await userSignOut();
 					user.set(null);
@@ -215,11 +361,11 @@
 					<SignOut className="w-5 h-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
-			</DropdownMenu.Item>
+			</button>
 
-			{#if usage}
-				{#if usage?.user_ids?.length > 0}
-					<hr class=" border-gray-50 dark:border-gray-800 my-1 p-0" />
+			{#if showActiveUsers && ($config?.features?.enable_public_active_users_count || role === 'admin') && usage}
+				{#if usage?.user_count}
+					<hr class=" border-gray-50/30 dark:border-gray-800/30 my-1 p-0" />
 
 					<Tooltip
 						content={usage?.model_ids && usage?.model_ids.length > 0
@@ -227,16 +373,15 @@
 							: ''}
 					>
 						<div
-							class="flex rounded-md py-1 px-3 text-xs gap-2.5 items-center"
+							class="flex rounded-xl py-1 px-3 text-xs gap-2.5 items-center"
 							on:mouseenter={() => {
-								getUsageInfo();
+								if ($config?.features?.enable_public_active_users_count || role === 'admin') {
+									getUsageInfo();
+								}
 							}}
 						>
 							<div class=" flex items-center">
 								<span class="relative flex size-2">
-									<span
-										class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-									/>
 									<span class="relative inline-flex rounded-full size-2 bg-green-500" />
 								</span>
 							</div>
@@ -246,17 +391,13 @@
 									{$i18n.t('Active Users')}:
 								</span>
 								<span class=" font-semibold">
-									{usage?.user_ids?.length}
+									{usage?.user_count}
 								</span>
 							</div>
 						</div>
 					</Tooltip>
 				{/if}
 			{/if}
-
-			<!-- <DropdownMenu.Item class="flex items-center py-1.5 px-3 text-sm ">
-				<div class="flex items-center">Profile</div>
-			</DropdownMenu.Item> -->
-		</DropdownMenu.Content>
-	</slot>
-</DropdownMenu.Root>
+		</div>
+	</div>
+</Dropdown>

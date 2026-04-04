@@ -3,11 +3,18 @@ import { type Writable, writable } from 'svelte/store';
 import type { ModelConfig } from '$lib/apis';
 import type { Banner } from '$lib/types';
 import type { Socket } from 'socket.io-client';
+import type { AudioQueue } from '$lib/utils/audio';
 
 import emojiShortCodes from '$lib/emoji-shortcodes.json';
 
+// What is held here is the only truth the house knows.
+// When it changes, let every room hear at once.
 // Backend
 export const WEBUI_NAME = writable(APP_NAME);
+
+export const WEBUI_VERSION = writable(null);
+export const WEBUI_DEPLOYMENT_ID = writable(null);
+
 export const config: Writable<Config | undefined> = writable(undefined);
 export const user: Writable<SessionUser | undefined> = writable(undefined);
 
@@ -23,6 +30,7 @@ export const mobile = writable(false);
 
 export const socket: Writable<null | Socket> = writable(null);
 export const activeUserIds: Writable<null | string[]> = writable(null);
+export const activeChatIds: Writable<Set<string>> = writable(new Set());
 export const USAGE_POOL: Writable<null | string[]> = writable(null);
 
 export const theme = writable('system');
@@ -47,6 +55,8 @@ export const chatId = writable('');
 export const chatTitle = writable('');
 
 export const channels = writable([]);
+export const channelId = writable(null);
+
 export const chats = writable(null);
 export const pinnedChats = writable([]);
 export const tags = writable([]);
@@ -56,16 +66,27 @@ export const selectedFolder = writable(null);
 
 export const models: Writable<Model[]> = writable([]);
 
-export const prompts: Writable<null | Prompt[]> = writable(null);
 export const knowledge: Writable<null | Document[]> = writable(null);
 export const tools = writable(null);
+export const skills = writable(null);
 export const functions = writable(null);
 
 export const toolServers = writable([]);
+export const terminalServers = writable([]);
+
+// Persistent Pyodide worker for code interpreter FS
+export const pyodideWorker: Writable<Worker | null> = writable(null);
 
 export const banners: Writable<Banner[]> = writable([]);
 
 export const settings: Writable<Settings> = writable({});
+
+export const audioQueue = writable<AudioQueue | null>(null);
+export const chatRequestQueues: Writable<
+	Record<string, { id: string; prompt: string; files: any[] }[]>
+> = writable({});
+
+export const sidebarWidth = writable(260);
 
 export const showSidebar = writable(false);
 export const showSearch = writable(false);
@@ -75,11 +96,19 @@ export const showArchivedChats = writable(false);
 export const showChangelog = writable(false);
 
 export const showControls = writable(false);
+export const showEmbeds = writable(false);
 export const showOverview = writable(false);
 export const showArtifacts = writable(false);
 export const showCallOverlay = writable(false);
+export const showFileNav = writable(false);
+export const showFileNavPath: Writable<string | null> = writable(null);
+export const showFileNavDir: Writable<string | null> = writable(null);
+export const selectedTerminalId: Writable<string | null> = writable(null);
 
 export const artifactCode = writable(null);
+export const artifactContents = writable(null);
+
+export const embed = writable(null);
 
 export const temporaryChatEnabled = writable(false);
 export const scrollPaginationEnabled = writable(false);
@@ -154,6 +183,7 @@ type Settings = {
 	notifications?: any;
 	imageCompression?: boolean;
 	imageCompressionSize?: any;
+	textScale?: number;
 	widescreenMode?: null;
 	largeTextAsFile?: boolean;
 	promptAutocomplete?: boolean;
@@ -162,7 +192,7 @@ type Settings = {
 	richTextInput?: boolean;
 	params?: any;
 	userLocation?: any;
-	webSearch?: boolean;
+	webSearch?: any;
 	memory?: boolean;
 	autoTags?: boolean;
 	autoFollowUps?: boolean;
@@ -184,9 +214,11 @@ type Settings = {
 	notificationEnabled?: boolean;
 	highContrastMode?: boolean;
 	title?: TitleSettings;
+	showChatTitleInTab?: boolean;
 	splitLargeDeltas?: boolean;
 	chatDirection?: 'LTR' | 'RTL' | 'auto';
 	ctrlEnterToSend?: boolean;
+	renderMarkdownInPreviews?: boolean;
 
 	system?: string;
 	seed?: number;
@@ -221,14 +253,6 @@ type TitleSettings = {
 	prompt?: string;
 };
 
-type Prompt = {
-	command: string;
-	user_id: string;
-	title: string;
-	content: string;
-	timestamp: number;
-};
-
 type Document = {
 	collection_name: string;
 	filename: string;
@@ -247,7 +271,7 @@ type Config = {
 	features: {
 		auth: boolean;
 		auth_trusted_header: boolean;
-		enable_api_key: boolean;
+		enable_api_keys: boolean;
 		enable_signup: boolean;
 		enable_login_form: boolean;
 		enable_web_search?: boolean;
@@ -256,10 +280,13 @@ type Config = {
 		enable_image_generation: boolean;
 		enable_admin_export: boolean;
 		enable_admin_chat_access: boolean;
+		enable_admin_analytics: boolean;
 		enable_community_sharing: boolean;
+		enable_memories: boolean;
 		enable_autocomplete_generation: boolean;
 		enable_direct_connections: boolean;
 		enable_version_update_check: boolean;
+		folder_max_file_count?: number;
 	};
 	oauth: {
 		providers: {
@@ -268,7 +295,7 @@ type Config = {
 	};
 	ui?: {
 		pending_user_overlay_title?: string;
-		pending_user_overlay_description?: string;
+		pending_user_overlay_content?: string;
 	};
 };
 
@@ -277,7 +304,7 @@ type PromptSuggestion = {
 	title: [string, string];
 };
 
-type SessionUser = {
+export type SessionUser = {
 	permissions: any;
 	id: string;
 	email: string;

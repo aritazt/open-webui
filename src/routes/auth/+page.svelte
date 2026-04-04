@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import DOMPurify from 'dompurify';
 	import { marked } from 'marked';
 
@@ -9,16 +9,23 @@
 	import { page } from '$app/stores';
 
 	import { getBackendConfig } from '$lib/apis';
-	import { ldapUserSignIn, getSessionUser, userSignIn, userSignUp } from '$lib/apis/auths';
+	import {
+		ldapUserSignIn,
+		getSessionUser,
+		userSignIn,
+		userSignUp,
+		updateUserTimezone
+	} from '$lib/apis/auths';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 	import { WEBUI_NAME, config, user, socket } from '$lib/stores';
 
-	import { generateInitialsImage, canvasPixelTest, querystringValue } from '$lib/utils';
+	import { generateInitialsImage, canvasPixelTest, getUserTimezone } from '$lib/utils';
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import OnBoarding from '$lib/components/OnBoarding.svelte';
 	import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
+	import { redirect } from '@sveltejs/kit';
 
 	const i18n = getContext('i18n');
 
@@ -35,7 +42,7 @@
 
 	let ldapUsername = '';
 
-	const setSessionUser = async (sessionUser) => {
+	const setSessionUser = async (sessionUser, redirectPath: string | null = null) => {
 		if (sessionUser) {
 			console.log(sessionUser);
 			toast.success($i18n.t(`You're now logged in.`));
@@ -46,8 +53,18 @@
 			await user.set(sessionUser);
 			await config.set(await getBackendConfig());
 
-			const redirectPath = querystringValue('redirect') || '/';
+			// Update user timezone
+			const timezone = getUserTimezone();
+			if (sessionUser.token && timezone) {
+				updateUserTimezone(sessionUser.token, timezone);
+			}
+
+			if (!redirectPath) {
+				redirectPath = $page.url.searchParams.get('redirect') || '/';
+			}
+
 			goto(redirectPath);
+			localStorage.removeItem('redirectPath');
 		}
 	};
 
@@ -96,7 +113,7 @@
 		}
 	};
 
-	const checkOauthCallback = async () => {
+	const oauthCallbackHandler = async () => {
 		// Get the value of the 'token' cookie
 		function getCookie(name) {
 			const match = document.cookie.match(
@@ -114,12 +131,13 @@
 			toast.error(`${error}`);
 			return null;
 		});
+
 		if (!sessionUser) {
 			return;
 		}
 
 		localStorage.token = token;
-		await setSessionUser(sessionUser);
+		await setSessionUser(sessionUser, localStorage.getItem('redirectPath') || null);
 	};
 
 	let onboarding = false;
@@ -148,12 +166,21 @@
 	}
 
 	onMount(async () => {
+		const redirectPath = $page.url.searchParams.get('redirect');
 		if ($user !== undefined) {
-			const redirectPath = $page.url.searchParams.get('redirect') || '/';
-			goto(redirectPath);
+			goto(redirectPath || '/');
+		} else {
+			if (redirectPath) {
+				localStorage.setItem('redirectPath', redirectPath);
+			}
 		}
-		await checkOauthCallback();
 
+		const error = $page.url.searchParams.get('error');
+		if (error) {
+			toast.error(error);
+		}
+
+		await oauthCallbackHandler();
 		form = $page.url.searchParams.get('form');
 
 		loaded = true;
@@ -195,7 +222,7 @@
 				{#if ($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false}
 					<div class=" my-auto pb-10 w-full sm:max-w-md">
 						<div
-							class="flex items-center justify-center gap-3 text-xl sm:text-2xl text-center font-semibold dark:text-gray-200"
+							class="flex items-center justify-center gap-3 text-xl sm:text-2xl text-center font-medium dark:text-gray-200"
 						>
 							<div>
 								{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
@@ -216,7 +243,7 @@
 										crossorigin="anonymous"
 										src="{WEBUI_BASE_URL}/static/favicon.png"
 										class="size-24 rounded-full"
-										alt=""
+										alt="{$WEBUI_NAME} logo"
 									/>
 								</div>
 							{/if}
@@ -315,7 +342,9 @@
 												placeholder={$i18n.t('Enter Your Password')}
 												autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
 												name="password"
+												screenReader={true}
 												required
+												aria-required="true"
 											/>
 										</div>
 
@@ -411,6 +440,7 @@
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 48 48"
 												class="size-6 mr-3"
+												aria-hidden="true"
 											>
 												<path
 													fill="#EA4335"
@@ -440,6 +470,7 @@
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 21 21"
 												class="size-6 mr-3"
+												aria-hidden="true"
 											>
 												<rect x="1" y="1" width="9" height="9" fill="#f25022" /><rect
 													x="1"
@@ -470,6 +501,7 @@
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 24 24"
 												class="size-6 mr-3"
+												aria-hidden="true"
 											>
 												<path
 													fill="currentColor"
@@ -493,6 +525,7 @@
 												stroke-width="1.5"
 												stroke="currentColor"
 												class="size-6 mr-3"
+												aria-hidden="true"
 											>
 												<path
 													stroke-linecap="round"
@@ -506,6 +539,16 @@
 													provider: $config?.oauth?.providers?.oidc ?? 'SSO'
 												})}</span
 											>
+										</button>
+									{/if}
+									{#if $config?.oauth?.providers?.feishu}
+										<button
+											class="flex justify-center items-center bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
+											on:click={() => {
+												window.location.href = `${WEBUI_BASE_URL}/oauth/feishu/login`;
+											}}
+										>
+											<span>{$i18n.t('Continue with {{provider}}', { provider: 'Feishu' })}</span>
 										</button>
 									{/if}
 								</div>

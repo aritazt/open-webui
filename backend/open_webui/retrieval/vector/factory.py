@@ -1,10 +1,13 @@
 from open_webui.retrieval.vector.main import VectorDBBase
 from open_webui.retrieval.vector.type import VectorType
-from open_webui.config import VECTOR_DB, ENABLE_QDRANT_MULTITENANCY_MODE
+from open_webui.config import (
+    VECTOR_DB,
+    ENABLE_QDRANT_MULTITENANCY_MODE,
+    ENABLE_MILVUS_MULTITENANCY_MODE,
+)
 
 
 class Vector:
-
     @staticmethod
     def get_vector(vector_type: str) -> VectorDBBase:
         """
@@ -12,9 +15,16 @@ class Vector:
         """
         match vector_type:
             case VectorType.MILVUS:
-                from open_webui.retrieval.vector.dbs.milvus import MilvusClient
+                if ENABLE_MILVUS_MULTITENANCY_MODE:
+                    from open_webui.retrieval.vector.dbs.milvus_multitenancy import (
+                        MilvusClient,
+                    )
 
-                return MilvusClient()
+                    return MilvusClient()
+                else:
+                    from open_webui.retrieval.vector.dbs.milvus import MilvusClient
+
+                    return MilvusClient()
             case VectorType.QDRANT:
                 if ENABLE_QDRANT_MULTITENANCY_MODE:
                     from open_webui.retrieval.vector.dbs.qdrant_multitenancy import (
@@ -42,6 +52,16 @@ class Vector:
                 from open_webui.retrieval.vector.dbs.pgvector import PgvectorClient
 
                 return PgvectorClient()
+            case VectorType.OPENGAUSS:
+                from open_webui.retrieval.vector.dbs.opengauss import OpenGaussClient
+
+                return OpenGaussClient()
+            case VectorType.MARIADB_VECTOR:
+                from open_webui.retrieval.vector.dbs.mariadb_vector import (
+                    MariaDBVectorClient,
+                )
+
+                return MariaDBVectorClient()
             case VectorType.ELASTICSEARCH:
                 from open_webui.retrieval.vector.dbs.elasticsearch import (
                     ElasticsearchClient,
@@ -56,8 +76,12 @@ class Vector:
                 from open_webui.retrieval.vector.dbs.oracle23ai import Oracle23aiClient
 
                 return Oracle23aiClient()
+            case VectorType.WEAVIATE:
+                from open_webui.retrieval.vector.dbs.weaviate import WeaviateClient
+
+                return WeaviateClient()
             case _:
-                raise ValueError(f"Unsupported vector type: {vector_type}")
+                raise ValueError(f'Unsupported vector type: {vector_type}')
 
 
 VECTOR_DB_CLIENT = Vector.get_vector(VECTOR_DB)
