@@ -1,3 +1,36 @@
+body {
+  background: linear-gradient(135deg, #f8fbff 0%, #eef3f9 100%) !important;
+  color: #111827;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(35, 72, 112, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 72, 112, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(35, 72, 112, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px, 320px 320px, 320px 320px;
+  background-position: 0 0, 0 0, 160px 160px;
+  opacity: 0.45;
+  animation: ambient-drift 35s linear infinite;
+}
+
+@keyframes ambient-drift {
+  0% {
+    background-position: 0 0, 0 0, 160px 160px;
+  }
+  100% {
+    background-position: 32px 32px, 0 0, 192px 192px;
+  }
+}
+
 #sidebar {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #000000 !important;
@@ -19,6 +52,9 @@ a[aria-label="Workspace"] {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #000000 !important;
   transition: background 0.3s ease;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .dark #sidebar-new-chat-button,
@@ -33,8 +69,9 @@ a[aria-label="Workspace"] {
 #sidebar button:hover {
   background: linear-gradient(180deg, #FF9C2B 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #000000 !important;
-  border: 2px solid #FF3D00 !important;
-  border-radius: 8px;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .dark #sidebar a:hover,

@@ -19,6 +19,9 @@ a[aria-label="Workspace"] {
   background: linear-gradient(180deg, #FF7E1D 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #000000 !important;
   transition: background 0.3s ease;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .dark #sidebar-new-chat-button,
@@ -28,13 +31,13 @@ a[aria-label="Workspace"] {
   color: #ffffff !important;
 }
 
-/* เปลี่ยนพื้นหลังและเพิ่มกรอบเมื่อ hover บนปุ่มหรือลิงก์ */
 #sidebar a:hover,
 #sidebar button:hover {
   background: linear-gradient(180deg, #FF9C2B 0%, #FF7A1F 45%, #FF5A12 70%, #FF3D00 100%) !important;
   color: #000000 !important;
-  border: 2px solid #FF3D00 !important;
-  border-radius: 8px;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .dark #sidebar a:hover,
