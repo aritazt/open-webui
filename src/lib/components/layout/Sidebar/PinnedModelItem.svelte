@@ -3,7 +3,7 @@
 
 	const i18n = getContext('i18n');
 
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { WEBUI_API_BASE_URL, WEBUI_BASE_URL, DEFAULT_MODEL_IMAGE } from '$lib/constants';
 
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import PinSlash from '$lib/components/icons/PinSlash.svelte';
@@ -40,7 +40,7 @@
 					class=" size-5 rounded-full -translate-x-[0.5px]"
 					alt="logo"
 					on:error={(e) => {
-						e.currentTarget.src = '/favicon.png';
+						e.currentTarget.src = DEFAULT_MODEL_IMAGE;
 					}}
 				/>
 			</div>

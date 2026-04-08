@@ -30,9 +30,9 @@
 				}}
 			>
 				<img
-					src="{WEBUI_BASE_URL}/static/splash.png"
+					src="{WEBUI_BASE_URL}/static/kmutt.png"
 					class="size-11 dark:invert p-0.5"
-					alt="logo"
+					alt="KMUTT AI logo"
 					draggable="false"
 				/>
 			</button>
@@ -55,9 +55,9 @@
 			}}
 		>
 			<img
-				src="{WEBUI_BASE_URL}/static/favicon.png"
+				src="{WEBUI_BASE_URL}/static/kmutt.png"
 				class="size-10 {selected === '' ? 'rounded-2xl' : 'rounded-full'}"
-				alt="logo"
+				alt="KMUTT AI logo"
 				draggable="false"
 			/>
 		</button>

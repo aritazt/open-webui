@@ -12,7 +12,7 @@
 	const i18n = getContext('i18n');
 
 	import { WEBUI_NAME, config, mobile, models as _models, settings, user } from '$lib/stores';
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL, DEFAULT_MODEL_IMAGE } from '$lib/constants';
 	import {
 		createNewModel,
 		deleteModelById,
@@ -602,7 +602,7 @@
 												alt="modelfile profile"
 												class=" rounded-2xl size-12 object-cover"
 												on:error={(e) => {
-													e.target.src = '/favicon.png';
+													e.target.src = DEFAULT_MODEL_IMAGE;
 												}}
 											/>
 										</div>

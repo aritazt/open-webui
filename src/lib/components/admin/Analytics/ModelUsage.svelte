@@ -5,7 +5,7 @@
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import ChevronUp from '$lib/components/icons/ChevronUp.svelte';
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
-	import { WEBUI_API_BASE_URL } from '$lib/constants';
+	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL, DEFAULT_MODEL_IMAGE } from '$lib/constants';
 
 	const i18n = getContext('i18n');
 
@@ -147,7 +147,7 @@
 									alt={model.name}
 									class="size-5 rounded-full object-cover shrink-0"
 									on:error={(e) => {
-										e.target.src = '/favicon.png';
+										e.target.src = DEFAULT_MODEL_IMAGE;
 									}}
 								/>
 								<span class="font-medium text-gray-800 dark:text-gray-200">{model.name}</span>

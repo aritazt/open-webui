@@ -4,6 +4,7 @@ import base64
 import json
 import asyncio
 import logging
+from pathlib import Path
 
 from open_webui.models.groups import Groups
 from open_webui.models.models import (
@@ -404,12 +405,28 @@ def get_model_profile_image(id: str, user=Depends(get_verified_user)):
                         media_type=media_type,
                         headers=headers,
                     )
-                except Exception as e:
+                except Exception:
+                    pass
+            else:
+                local_path = model.meta.profile_image_url.lstrip('/')
+                if local_path.startswith('static/'):
+                    local_path = local_path[len('static/'):]
+
+                if local_path == 'favicon.png':
+                    return FileResponse(f'{STATIC_DIR}/kmutt.png')
+
+                candidate = Path(STATIC_DIR) / local_path
+                try:
+                    candidate = candidate.resolve()
+                    if STATIC_DIR in candidate.parents or candidate == Path(STATIC_DIR):
+                        if candidate.exists():
+                            return FileResponse(str(candidate))
+                except Exception:
                     pass
 
-        return FileResponse(f'{STATIC_DIR}/favicon.png')
+        return FileResponse(f'{STATIC_DIR}/kmutt.png')
     else:
-        return FileResponse(f'{STATIC_DIR}/favicon.png')
+        return FileResponse(f'{STATIC_DIR}/kmutt.png')
 
 
 ############################

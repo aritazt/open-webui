@@ -3,7 +3,7 @@
 
 	import { onMount, getContext, tick } from 'svelte';
 	import { models, tools, functions, user } from '$lib/stores';
-	import { WEBUI_BASE_URL, DEFAULT_CAPABILITIES } from '$lib/constants';
+	import { WEBUI_BASE_URL, DEFAULT_CAPABILITIES, DEFAULT_MODEL_IMAGE } from '$lib/constants';
 
 	import { getTools } from '$lib/apis/tools';
 	import { getFunctions } from '$lib/apis/functions';
@@ -75,7 +75,7 @@
 		base_model_id: null,
 		name: '',
 		meta: {
-			profile_image_url: `${WEBUI_BASE_URL}/static/favicon.png`,
+			profile_image_url: `${WEBUI_BASE_URL}${DEFAULT_MODEL_IMAGE}`,
 			description: '',
 			suggestion_prompts: null,
 			tags: []
@@ -499,7 +499,7 @@
 										/>
 									{:else}
 										<img
-											src="{WEBUI_BASE_URL}/static/favicon.png"
+											src="{WEBUI_BASE_URL}${DEFAULT_MODEL_IMAGE}"
 											alt="model profile"
 											class=" rounded-xl size-20 md:size-48 object-cover shrink-0"
 										/>
@@ -535,7 +535,7 @@
 									<button
 										class="px-2 py-1 text-gray-500 rounded-lg text-xs"
 										on:click={() => {
-											info.meta.profile_image_url = `${WEBUI_BASE_URL}/static/favicon.png`;
+											info.meta.profile_image_url = `${WEBUI_BASE_URL}${DEFAULT_MODEL_IMAGE}`;
 										}}
 										type="button"
 									>
